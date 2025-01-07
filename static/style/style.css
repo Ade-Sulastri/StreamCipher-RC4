@@ -151,10 +151,12 @@ nav {
 .custom-file-upload:hover {
   background: rgba(255, 255, 255, 0.4);
 }
-
-.custom-file-upload input[type="file"] {
-  display: none;
+.custom-file-upload input {
+  background-color: none;
 }
+/* .custom-file-upload input[type="file"] {
+  display: none;
+} */
 
 @keyframes float {
   0% {
