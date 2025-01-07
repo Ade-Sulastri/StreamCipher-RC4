@@ -203,6 +203,7 @@ import numpy as np
 from flask import Flask, redirect, render_template, request, url_for, send_file, send_from_directory
 from PIL import Image
 import requests
+import tempfile
 
 import cloudinary
 import cloudinary.uploader
