@@ -217,8 +217,9 @@ cloudinary.config(
 )
 
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = 'static/uploads'
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+# app.config['UPLOAD_FOLDER'] = 'static/uploads'
+# os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+app.config['UPLOAD_FOLDER'] = tempfile.gettempdir()
 
 def KSA(key):
     key_length = len(key)
@@ -307,6 +308,13 @@ def extract_message(image_data, key):
     return ''.join(decrypted)
 
 def download_from_cloudinary(url, filename):
+    # response = requests.get(url)
+    # if response.status_code == 200:
+    #     filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    #     with open(filepath, 'wb') as f:
+    #         f.write(response.content)
+    #     return filename
+    # return None
     response = requests.get(url)
     if response.status_code == 200:
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
@@ -316,6 +324,44 @@ def download_from_cloudinary(url, filename):
     return None
 
 @app.route('/', methods=['GET', 'POST'])
+# def home():
+#     if request.method == 'POST':
+#         input_img = request.files['file']
+#         input_message = request.form['message']
+#         input_key = request.form['key']
+
+#         if input_img and input_message and input_key:
+#             try:
+#                 # Process the image
+#                 img_data = input_img.read()
+#                 processed_img = hide_message(img_data, input_message, input_key)
+                
+#                 # Upload to Cloudinary
+#                 upload_result = cloudinary.uploader.upload(
+#                     processed_img,
+#                     folder="steganography",
+#                     resource_type="raw"
+#                 )
+                
+#                 # Get the secure URL and public ID
+#                 image_url = upload_result['secure_url']
+#                 public_id = upload_result['public_id'].split('/')[-1]
+#                 filename = f"{public_id}.png"
+                
+#                 # Download and save to local
+#                 downloaded_file = download_from_cloudinary(image_url, filename)
+                
+#                 if downloaded_file:
+#                     return render_template('index.html', 
+#                                         output_image=image_url,
+#                                         local_filename=downloaded_file)
+#                 else:
+#                     return render_template('index.html', error="Failed to download image")
+                    
+#             except Exception as e:
+#                 return render_template('index.html', error=str(e))
+                
+#     return render_template('index.html')
 def home():
     if request.method == 'POST':
         input_img = request.files['file']
@@ -340,15 +386,19 @@ def home():
                 public_id = upload_result['public_id'].split('/')[-1]
                 filename = f"{public_id}.png"
                 
-                # Download and save to local
-                downloaded_file = download_from_cloudinary(image_url, filename)
-                
-                if downloaded_file:
+                try:
+                    # Download and save to local temp directory
+                    downloaded_file = download_from_cloudinary(image_url, filename)
+                    
+                    if downloaded_file:
+                        return render_template('index.html', 
+                                            output_image=image_url,
+                                            local_filename=downloaded_file)
+                    else:
+                        return render_template('index.html', error="Failed to download image")
+                except Exception as e:
                     return render_template('index.html', 
-                                        output_image=image_url,
-                                        local_filename=downloaded_file)
-                else:
-                    return render_template('index.html', error="Failed to download image")
+                                        error=f"Failed to save locally: {str(e)}")
                     
             except Exception as e:
                 return render_template('index.html', error=str(e))
@@ -356,8 +406,13 @@ def home():
     return render_template('index.html')
 
 @app.route('/download/<filename>')
+# def download_file(filename):
+#     return send_from_directory(app.config['UPLOAD_FOLDER'], filename, as_attachment=True)
 def download_file(filename):
-    return send_from_directory(app.config['UPLOAD_FOLDER'], filename, as_attachment=True)
+    try:
+        return send_from_directory(app.config['UPLOAD_FOLDER'], filename, as_attachment=True)
+    except Exception as e:
+        return str(e), 404
 
 @app.route('/ekstrak.html', methods=['GET', 'POST'])
 def ekstrak():
